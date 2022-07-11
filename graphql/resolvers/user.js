@@ -10,10 +10,17 @@ const UserRole = require("../../models/userRole");
 const constants = require("../../util/constants");
 const errorCodes = require("../../util/errorCodes");
 const roleValues = require("../../util/roleValues");
-const errorResolver = require("./errors");
+const errors = require("../errors/errors");
 const languagesResolver = require("./language");
 
 const resolver = {
+    getUserRoles: async (id) => {
+        const userRoles = await UserRole.find({ userID: id });
+        const roleIds = userRoles.map(ur => ur.roleID);
+        const roles = await Role.find({ _id: { $in: roleIds } });
+
+        return roles;
+    },
     findUserByID: async (id) => {
         return await User.findById(id);
     },
@@ -21,11 +28,10 @@ const resolver = {
         return await User.findOne({ email });
     },
     createUser: async (args) => {
-        const defaultLang = await languagesResolver.getDefaultLanguage();
         const userFound = await resolver.findOneByEmail(args.input.email);
 
         if(userFound) {
-            throw await errorResolver.getErrorInstance(defaultLang._id, errorCodes.userExists);
+            throw await errors.getError(req.lang._id, errorCodes.userExists);
         }
         const hash = bcrypt.hashSync(args.input.pass, constants.saltRound);
         const user = new User({
@@ -33,7 +39,7 @@ const resolver = {
             lastName: args.input.lastName,
             email: args.input.email,
             pass: hash,
-            languageID: defaultLang._id,
+            languageID: req.lang._id,
             date: new Date(),
         });
         const created = await user.save();
@@ -48,15 +54,14 @@ const resolver = {
         return resolver.signJwt(created);
     },
     login: async (args) => {
-        const defaultLang = await languagesResolver.getDefaultLanguage();
         const user = await resolver.findOneByEmail(args.input.email);
         if(!user) {
-            throw await errorResolver.getErrorInstance(defaultLang._id, errorCodes.userNotFound);
+            throw await errors.getError(req.lang._id, errorCodes.userNotFound);
         }
 
         const result = bcrypt.compareSync(args.input.pass, user.pass);
         if(!result) {
-            throw await errorResolver.getErrorInstance(defaultLang._id, errorCodes.incorrectPassword);
+            throw await errors.getError(req.lang._id, errorCodes.incorrectPassword);
         }
 
         return resolver.signJwt(user);
@@ -65,6 +70,22 @@ const resolver = {
         return { 
             token: jwt.sign({ _id: user._id, date: new Date() }, process.env.JWT_SECRET)
         };
+    },
+    setLang: async (args, req) => {
+        if(req.userData) {
+            const langId = args.input._id;
+            const lang = await languagesResolver.getLanguageById(langId);
+
+            if(lang) {
+                await User.updateOne({ _id: req.userData._id }, { languageID: lang._id });
+            } else {
+                throw await errors.getError(req.lang._id, errorCodes.langNotFound);
+            }
+
+            return lang;
+        } else {
+            throw await errors.getError(req.lang._id, errorCodes.unauthorized);
+        }
     }
 };
 

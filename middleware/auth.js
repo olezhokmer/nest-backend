@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const User = require("../models/user");
-const Role = require("../models/role");
-const UserRole = require("../models/userRole");
+const userResolver = require("../graphql/resolvers/user");
 
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
@@ -24,5 +23,8 @@ module.exports = async (req, res, next) => {
     }
 
     req.userData = await User.findById(decoded._id);
+    if(req.userData) {
+        req.userData.roles = await userResolver.getUserRoles(decoded._id);
+    }
     return next();
 }

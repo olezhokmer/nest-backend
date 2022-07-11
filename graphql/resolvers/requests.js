@@ -1,11 +1,22 @@
 const mongoose = require('mongoose');
 const ProjectRequest = require("../../models/projectRequest");
 
+const errors = require("../errors/errors");
+const errorCodes = require("../../util/errorCodes");
+const roleValues = require("../../util/roleValues");
+
 const resolver = {
     getProjectRequests: async (args, req) => {
         if(req.userData) {
+            const adminRole = req.userData.roles.find(role => role.name === roleValues.admin);
+            if(!adminRole) {
+                throw await errors.getError(req.lang._id, errorCodes.noPermissions);
+            }
+
             return await ProjectRequest.find();
-        } else return [];
+        } else {
+            throw await errors.getError(req.lang._id, errorCodes.unauthorized);
+        };
     },
 
     requestProject: async (args) => {

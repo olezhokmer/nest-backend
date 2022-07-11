@@ -34,6 +34,16 @@ module.exports = buildSchema(`
         token: String
     }
 
+    type Language {
+        _id: ID!
+        name: String!
+        code: String!
+    }
+
+    input Lang {
+        _id: ID!
+    }
+
     type RootQuery {
         getProjectRequests: [RequestType!]!
         login(input: SignInInputData!): Token
@@ -42,6 +52,7 @@ module.exports = buildSchema(`
     type RootMutation {
         requestProject(input: RequestInputData!): RequestType!
         createUser(input: SignUpInputData!): Token
+        setLang(input: Lang!): Language!
     }
 
     schema {

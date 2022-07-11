@@ -13,3 +13,14 @@ const roleValues = require("./util/roleValues");
 module.exports = async () => {
 
 }
+
+async function insertError(lang, errorType, code, message) {
+    const lan = await Language.findOne({ code: lang });
+    const type = await (new ErrorType({ type: errorType, code })).save();
+
+    return await (new ErrorSchema({
+        errorTypeID: type._id,
+        languageID: lan._id,
+        message
+    })).save();
+}

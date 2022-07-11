@@ -6,6 +6,10 @@ const ErrorTypeSchema = new Schema({
         type: String,
         required: true,
     },
+    code: {
+        type: Number,
+        required: true,
+    },
 });
 
 module.exports = mongoose.model('ErrorType', ErrorTypeSchema);

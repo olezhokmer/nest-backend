@@ -18,9 +18,10 @@ const UserRole = require("./models/userRole");
 const schema = require("./graphql/schema");
 const resolver = require("./graphql/resolver");
 const authMiddleware = require("./middleware/auth");
+const langMiddleware = require("./middleware/injectLang");
 
 app.use(bodyParser.json());
-app.use(authMiddleware);
+app.use(authMiddleware, langMiddleware);
 
 app.use('/graphql', graphqlHTTP({
     schema,
@@ -31,14 +32,12 @@ app.use('/graphql', graphqlHTTP({
             return err;
         }
 
-        const data = err.originalError.data;
-        const message = err.message || "An error occurred";
-        const status = err.originalError.code || 500;
+        const message = err.message;
+        const status = err.originalError.code;
 
         return {
             message,
             status,
-            data,
         };
     }
 }));
@@ -49,7 +48,6 @@ mongoose
 )
 .then(async () => {
 
-    
     app.listen(process.env.PORT, () => log.success("Server started."));
     
 })

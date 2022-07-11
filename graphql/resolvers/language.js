@@ -7,6 +7,9 @@ const resolver = {
     },
     getLanguageById: async (id) => {
         return await Language.findById(id);
+    },
+    getLanguageByCode: async (code) => {
+        return await Language.findOne({ code });
     }
 }
 
