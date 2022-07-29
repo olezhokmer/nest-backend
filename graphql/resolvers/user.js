@@ -27,7 +27,7 @@ const resolver = {
     findOneByEmail: async (email) => {
         return await User.findOne({ email });
     },
-    createUser: async (args) => {
+    createUser: async (args, req) => {
         const userFound = await resolver.findOneByEmail(args.input.email);
 
         if(userFound) {
@@ -53,7 +53,7 @@ const resolver = {
 
         return resolver.signJwt(created);
     },
-    login: async (args) => {
+    login: async (args, req) => {
         const user = await resolver.findOneByEmail(args.input.email);
         if(!user) {
             throw await errors.getError(req.lang._id, errorCodes.userNotFound);
